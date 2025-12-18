@@ -32,7 +32,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://remotework-tracker-frontend.onrender.com",
+      "https://remote-frontend.onrender.com",
     ],
 
     credentials: true,
