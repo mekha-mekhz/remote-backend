@@ -42,5 +42,6 @@ router.get(
   role.onlyAdmin,
   adminController.getAdminStats
 );
+router.get("/task-managers", auth.authuser, adminController.getTaskManagers);
 
 module.exports = router;

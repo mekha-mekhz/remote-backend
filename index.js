@@ -1,64 +1,82 @@
+// Import required packages
+
 const express = require("express");
-const app = express();
 const cookieParser = require("cookie-parser");
-app.use(cookieParser());
-require("./utils/reminderJob");
-
-app.use(express.urlencoded({ extended: true }));
+const cors = require("cors");
 require("dotenv").config();
+const app = express();
 
-const port = process.env.PORT || 8000;
+// Middleware to parse cookies
+
+app.use(cookieParser());
+
+// Middleware to parse JSON and form data
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Connect to database
 
 const connectdb = require("./config/db");
-const authuser = require("./routes/authroutes");
+connectdb();
+
+// Import routes
+
+const authRoutes = require("./routes/authroutes");
 const taskRoutes = require("./routes/taskroutes");
-const timeroutes = require("./routes/timeroutes");
-const attendanceroutes = require("./routes/attendanceroutes");
-const leaveroutes = require("./routes/leaveroutes");
-const productivityroutes = require("./routes/dailreprtroutes");
+const timeRoutes = require("./routes/timeroutes");
+const attendanceRoutes = require("./routes/attendanceroutes");
+const leaveRoutes = require("./routes/leaveroutes");
+const productivityRoutes = require("./routes/dailreprtroutes");
 const adminRoutes = require("./routes/adminroutes");
-const notificationroutes = require("./routes/notificationRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const paymentRoutes = require("./routes/paymentroutes");
 const planRoutes = require("./routes/planroutes");
 const premiumRoutes = require("./routes/premiumroutes");
-const disputeroutes = require("./routes/disputeroutes");
-const productroutes = require("./routes/productivityroutes");
-const chatroutes = require("./routes/messageroutes");
-const reminderRoutes=require("./routes/reminderRoutes")
-connectdb();
-var cors = require("cors");
+const disputeRoutes = require("./routes/disputeroutes");
+const productRoutes = require("./routes/productivityroutes");
+const chatRoutes = require("./routes/messageroutes");
+const reminderRoutes = require("./routes/reminderRoutes");
+
+// CORS configuration
+
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://remote-frontend.onrender.com",
     ],
-
     credentials: true,
   })
 );
+
+// Base route
+
 app.get("/", (req, res) => {
-  res.send("WELCOME TO REMOTE WORK TRACKER ");
+  res.send("WELCOME TO REMOTE WORK TRACKER");
 });
 
-app.use("/api", authuser);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/time", timeroutes);
-app.use("/api/attendance", attendanceroutes);
-app.use("/api/leave", leaveroutes);
-app.use("/api/productivity", productivityroutes);
+// API routes
 
-app.use("/api/notifications", notificationroutes);
+app.use("/api", authRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/time", timeRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/leave", leaveRoutes);
+app.use("/api/productivity", productivityRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/pay", paymentRoutes);
 app.use("/api/premium", premiumRoutes);
-app.use("/api/disputes", disputeroutes);
-app.use("/api/productivitys", productroutes);
-app.use("/api/admin",adminRoutes)
+app.use("/api/disputes", disputeRoutes);
+app.use("/api/productivitys", productRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/plans", planRoutes);
-app.use("/api/messages", chatroutes);
+app.use("/api/messages", chatRoutes);
 app.use("/api/reminders", reminderRoutes);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Listening to port number http://localhost:${port}`);
+// Start server
+
+const port = process.env.PORT || 8000;
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });

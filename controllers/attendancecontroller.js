@@ -1,4 +1,4 @@
-Attendance=require("../models/attendancemodel");
+const Attendance=require("../models/attendancemodel");
 
 // ----------------- CHECK-IN -----------------
 exports.checkInUser = async (req, res) => {
@@ -80,3 +80,4 @@ exports.getAllAttendance = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+

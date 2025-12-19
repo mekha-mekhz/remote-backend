@@ -356,8 +356,12 @@ exports.forgotpassword = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  
   }
-};
+ 
+}
+
+
 exports.resetpassword = async (req, res) => {
   const { email, otp, password } = req.body;
 
@@ -429,3 +433,4 @@ exports.allstatus= async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+

@@ -78,3 +78,14 @@ exports.getAdminStats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+exports.getTaskManagers = async (req, res) => {
+  try {
+    const managers = await User.find({ role: "taskmanager" })
+      .select("_id name email role");
+
+    res.status(200).json({ success: true, managers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch task managers" });
+  }
+};

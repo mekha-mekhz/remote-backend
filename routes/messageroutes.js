@@ -1,15 +1,36 @@
-const express=require( "express");
-const router =express.Router()
-const auth =require("../middleware/auth");
-const  upload = require("../middleware/upload");
+const express = require("express");
+const router = express.Router();
 
-const messagecontroller=require("../controllers/messageController")
+// Middleware
+const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
+// Controller
+const messageController = require("../controllers/messageController");
 
+// ====================== SEND MESSAGE ===========================
+// Send a message to any user (user ↔ manager, manager ↔ admin)
+router.post(
+  "/send",
+  auth.authuser,          // Protect route, user must be logged in
+  upload.array("files"),  // Optional attachments
+  messageController.sendMessage
+);
 
-router.post("/send", auth.authuser, upload.array("files"), messagecontroller.sendMessage);
-router.get("/conversation/:withUserId", auth.authuser, messagecontroller.getConversation);
-router.get("/chats", auth.authuser, messagecontroller.getMyChats);
-router.get("/task-messages", auth.authuser, messagecontroller.getTaskMessages);
+// ====================== GET CONVERSATION ===========================
+// Get all messages between logged-in user and another user
+router.get(
+  "/conversation/:withUserId",
+  auth.authuser,
+  messageController.getConversation
+);
 
-module.exports=router
+// ====================== GET MY CHATS ===========================
+// Get latest message per conversation for logged-in user
+router.get("/chats", auth.authuser, messageController.getMyChats);
+
+// ====================== GET TASK MESSAGES ===========================
+// Get messages for all tasks assigned to the logged-in manager
+router.get("/task-messages", auth.authuser, messageController.getTaskMessages);
+
+module.exports = router;

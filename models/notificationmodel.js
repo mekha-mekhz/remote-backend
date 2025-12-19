@@ -24,7 +24,7 @@ const notificationSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["admin", "manager", "user", "all"],
-      default: "user",
+      default: "null",
     },
   },
   { timestamps: true }

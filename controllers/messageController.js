@@ -2,17 +2,22 @@ const Message = require("../models/messagemodel");
 const User = require("../models/usermodel");
 const Task = require("../models/taskmodel");
 
-// Helper: attach user info and task info manually
+// ====================== HELPER: Attach user & task info ===========================
+// Enrich message with sender, receiver, and task details
 const attachMessageData = async (message) => {
   if (!message) return message;
 
+  // Fetch sender info
   const sender = await User.findById(message.sender)
     .select("name email role")
     .lean();
+
+  // Fetch receiver info
   const receiver = await User.findById(message.receiver)
     .select("name email role")
     .lean();
 
+  // Fetch task info if exists
   let task = null;
   if (message.taskId) {
     task = await Task.findById(message.taskId).select("title").lean();
@@ -22,11 +27,12 @@ const attachMessageData = async (message) => {
     ...message,
     sender,
     receiver,
-    taskId: task, // attach task object with title
+    taskId: task,
   };
 };
 
 // ====================== SEND MESSAGE ===========================
+// Manager ↔ Admin, User ↔ Manager, any role-to-role
 exports.sendMessage = async (req, res) => {
   try {
     const { receiverId, taskId, message } = req.body;
@@ -35,6 +41,7 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Message, file, or task required" });
     }
 
+    // Create new message
     const newMsg = await Message.create({
       sender: req.user.id,
       receiver: receiverId,
@@ -43,6 +50,7 @@ exports.sendMessage = async (req, res) => {
       attachments: req.files?.map((f) => f.path) || [],
     });
 
+    // Enrich message with user & task info
     const finalMsg = await Message.findById(newMsg._id).lean();
     const enriched = await attachMessageData(finalMsg);
 
@@ -54,6 +62,7 @@ exports.sendMessage = async (req, res) => {
 };
 
 // ====================== GET CONVERSATION ===========================
+// Get all messages between logged-in user and another user (manager/admin/user)
 exports.getConversation = async (req, res) => {
   try {
     const { withUserId } = req.params;
@@ -67,6 +76,7 @@ exports.getConversation = async (req, res) => {
       .sort({ createdAt: 1 })
       .lean();
 
+    // Attach user & task info to each message
     const result = await Promise.all(msgs.map(async (m) => await attachMessageData(m)));
 
     res.status(200).json({ success: true, messages: result });
@@ -77,6 +87,7 @@ exports.getConversation = async (req, res) => {
 };
 
 // ====================== GET ALL CHAT LIST FOR USER ===========================
+// Returns unique conversations (latest message per user)
 exports.getMyChats = async (req, res) => {
   try {
     const msgs = await Message.find({
@@ -87,15 +98,13 @@ exports.getMyChats = async (req, res) => {
 
     const uniqueUsers = {};
 
+    // Keep only the latest message per user
     msgs.forEach((msg) => {
       const other =
         msg.sender.toString() === req.user.id
           ? msg.receiver.toString()
           : msg.sender.toString();
-
-      if (!uniqueUsers[other]) {
-        uniqueUsers[other] = msg; // store latest
-      }
+      if (!uniqueUsers[other]) uniqueUsers[other] = msg;
     });
 
     const chatList = await Promise.all(
@@ -127,11 +136,13 @@ exports.getMyChats = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch chats" });
   }
 };
-// Get messages for tasks assigned to this manager
+
+// ====================== GET MESSAGES FOR TASKS ASSIGNED TO THIS MANAGER ===========================
 exports.getTaskMessages = async (req, res) => {
   try {
+    // Get tasks where the logged-in user is manager
     const tasks = await Task.find({ manager: req.user.id }).select("_id");
-    const taskIds = tasks.map(t => t._id);
+    const taskIds = tasks.map((t) => t._id);
 
     const messages = await Message.find({ taskId: { $in: taskIds } })
       .sort({ createdAt: -1 })
@@ -139,7 +150,7 @@ exports.getTaskMessages = async (req, res) => {
 
     res.status(200).json({ success: true, messages });
   } catch (err) {
-    console.error(err);
+    console.error("Task messages error:", err);
     res.status(500).json({ message: "Failed to fetch task messages" });
   }
 };

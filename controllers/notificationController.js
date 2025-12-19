@@ -101,7 +101,7 @@ exports.createNotification = async ({
   message,
   type = "info",
   userId = null,
-  role = "user",
+  role = "null",
 }) => {
   try {
     await Notification.create({
@@ -115,14 +115,26 @@ exports.createNotification = async ({
     console.log("Notification creation failed:", err.message);
   }
 };
-// Create notification (used by manager to notify assigned users)
-exports.createnoti=async (req, res) => {
-    const { title, message, type, userId, role } = req.body;
-    try {
-      await Notification.create({ title, message, type, userId, role });
-      res.status(201).json({ message: "Notification sent" });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to create notification" });
+exports.createnoti = async (req, res) => {
+  try {
+    const { title, message, type, userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
     }
+
+    await Notification.create({
+      title,
+      message,
+      type,
+      userId,        // ✅ only this user
+      role: null,    // ❌ important: DO NOT broadcast
+    });
+
+    res.status(201).json({ message: "Notification sent" });
+  } catch (err) {
+    console.error("Notification error:", err);
+    res.status(500).json({ error: "Failed to create notification" });
   }
+};
 
